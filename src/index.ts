@@ -1,1 +1,1 @@
-export {sayHello, sayGoodbye} from './lib/hello-world';
+export {Model} from './lib/model';
