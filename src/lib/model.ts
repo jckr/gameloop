@@ -1,7 +1,7 @@
 type Param = boolean | number | string | null;
 type Params = Record<string, Param>;
 
-type State<T, U> = {
+export type ModelState<T, U> = {
   cachedData: Record<number, T>;
   cachedDataKeys: Set<number>;
   cachedDataKeysQueue: number[];
@@ -16,7 +16,7 @@ type State<T, U> = {
   timer: number | null;
 };
 
-type RenderDataArgs<T> = {
+export type RenderDataArgs<T> = {
   cachedData?: Record<number, T>;
   data?: T;
   tick?: number;
@@ -42,19 +42,26 @@ type DefaultProps = {
   ticksPerAnimation: number;
 };
 
+// type DataProps<T, U> = {
+//   initData: (params?: Params) => T;
+//   updateData: (args: UpdateData<T, U>) => T;
+//   render: (args: RenderDataArgs<T>) => void;
+// };
+
 type DataProps<T, U> = {
-  initData: (params?: Params) => T;
-  updateData: (args: UpdateData<T, U>) => T;
-  render: (args: RenderDataArgs<T>) => void;
+  initData: (params?: any) => T;
+  updateData: (args: any) => T;
+  render: (args: any) => void;
 };
+
 
 type OptionalProps<T> = {
   initialParams: Params;
 };
 
-type Props<T, U> = DataProps<T, U> & Partial<OptionalProps<T>> & DefaultProps;
+export type ModelProps<T, U> = DataProps<T, U> & Partial<OptionalProps<T>> & DefaultProps;
 
-const defaultProps = {
+export const defaultProps = {
   clearsDataCacheOnReset: true,
   clearsResultsCacheOnReset: true,
   dataCacheSize: 0,
@@ -68,10 +75,10 @@ const defaultProps = {
 };
 
 export class Model<T = any, U = any> {
-  private props: Props<T, U>;
-  private state: State<T, U>;
+  protected props: ModelProps<T, U>;
+  protected state: ModelState<T, U>;
 
-  constructor(props: Partial<Props<T, U>>) {
+  constructor(props: Partial<ModelProps<T, U>>) {
     this.props = {
       ...defaultProps,
       initData: () => ({} as T),
@@ -209,7 +216,7 @@ export class Model<T = any, U = any> {
  * @returns A new state, that only contains cached data.
  */
 
-function reset<T, U>(props: Props<T, U>, state?: State<T, U>): State<T, U> {
+function reset<T, U>(props: ModelProps<T, U>, state?: ModelState<T, U>): ModelState<T, U> {
   const params = state?.params || props.initialParams || {};
   const data = props.initData(params);
   const tick = props.initialTick ?? props.minTime ?? 0;
@@ -260,7 +267,7 @@ function reset<T, U>(props: Props<T, U>, state?: State<T, U>): State<T, U> {
 function checkCanPlay<T, U>(
   tick: number,
   maxTime: number,
-  state: State<T, U>
+  state: ModelState<T, U>
 ): boolean {
   if (state.canPlay === false || tick > maxTime) {
     state.canPlay = false;
@@ -273,7 +280,7 @@ function checkCanPlay<T, U>(
 /**
  * Stops the cycle of request animation frame calls, and clears the timer.
  */
-function stopAndCancelTimer<T, U>(state: State<T, U>) {
+function stopAndCancelTimer<T, U>(state: ModelState<T, U>) {
   if (state.timer) {
     window.cancelAnimationFrame(state.timer);
     state.timer = null;
@@ -289,8 +296,8 @@ function stopAndCancelTimer<T, U>(state: State<T, U>) {
  */
 function complete<T, U>(
   result: U,
-  state: State<T, U>,
-  props: Props<T, U>,
+  state: ModelState<T, U>,
+  props: ModelProps<T, U>,
   stop: () => void
 ) {
   if (props.resultsCacheSize > 0) {
@@ -305,10 +312,13 @@ function complete<T, U>(
 
 /**
  * Moves the simulation to a given tick.
- * @param {number} target - the tick to which the model must be updated.
- * @param {boolean} shouldStop - whether the simulation should stop after the tick is reached.
+ * @param target - the tick to which the model must be updated.
+ * @param shouldStop - whether the simulation should stop after the tick is reached.
  * @param state - The current state of the model.
  * @param props - The parameters of the model.
+ * @param stop - A function to stop the simulation.
+ * @param pause - A function to pause the simulation.
+ * @param render - A function to render the simulation.
  */
 function updateToTick<T, U>({
   target,
@@ -321,8 +331,8 @@ function updateToTick<T, U>({
 }: {
   target: number;
   shouldStop?: boolean;
-  state: State<T, U>;
-  props: Props<T, U>;
+  state: ModelState<T, U>;
+  props: ModelProps<T, U>;
   stop: () => void;
   pause: () => void;
   render: () => void;
