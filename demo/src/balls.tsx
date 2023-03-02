@@ -24,7 +24,7 @@ export const Page = () => {
   );
 };
 
-const Balls = ({ height, width }) => {
+const Balls = ({ height, width }: { height: number; width: number }) => {
   const canvas = useRef<HTMLCanvasElement | null>(null);
 
   React.useEffect(() => {
@@ -55,8 +55,16 @@ function initData(
   { height, width }: { height: number; width: number },
   random: () => number = Math.random
 ) {
-  return ({ nbBalls, minr, maxr}) => {
-    const data = [...Array(nbBalls).keys()].map((ball) => {
+  return ({
+    nbBalls,
+    minr,
+    maxr,
+  }: {
+    nbBalls: number;
+    minr: number;
+    maxr: number;
+  }) => {
+    const data = new Array(nbBalls).fill(0).map((ball) => {
       const angle = random() * 2 * Math.PI;
       const hue = random() * 360;
       const r = minr + random() * random() * (maxr - minr);
@@ -75,7 +83,7 @@ function initData(
   };
 }
 
-function render({ height, width }) {
+function render({ height, width }: { height: number; width: number }) {
   return ({
     ctx,
     circle,
