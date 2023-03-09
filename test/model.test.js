@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-const {Model} = require('../dist/index.js');
+const { Model } = require('../dist/index.js');
 
 function incrementerInitData() {
   return 0;
