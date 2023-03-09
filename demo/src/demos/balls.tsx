@@ -1,7 +1,10 @@
 import React, { useRef } from 'react';
-import { CanvasModel } from '../../dist/index';
+import { CanvasModel } from '../../../dist/index';
 import AutoSizer from 'react-virtualized-auto-sizer';
 const SPEED = 5;
+
+type Param = boolean | number | string | null;
+type Params = Record<string, Param>;
 
 type Ball = {
   originalHue: number;
@@ -14,17 +17,17 @@ type Ball = {
   vy: number;
 };
 
-export const Page = () => {
+export const Balls = () => {
   return (
     <div style={{ height: '100vh', width: '100%' }}>
       <AutoSizer>
-        {({ height, width }) => <Balls height={height} width={width} />}
+        {({ height, width }) => <BallsWithDimensions height={height} width={width} />}
       </AutoSizer>
     </div>
   );
 };
 
-const Balls = ({ height, width }: { height: number; width: number }) => {
+const BallsWithDimensions = ({ height, width }: { height: number; width: number }) => {
   const canvas = useRef<HTMLCanvasElement | null>(null);
 
   React.useEffect(() => {
@@ -37,12 +40,16 @@ const Balls = ({ height, width }: { height: number; width: number }) => {
       minr: 100,
     };
     if (ctx !== null) {
-      const model = new CanvasModel<Ball[]>({
+      const initData = initDataBuilder({ height, width });
+      const updateData = updateDataBuilder({ height, width });
+      const render = renderBuilder({ height, width });
+
+      const model = new CanvasModel<Ball[], typeof initialParams>({
         ctx,
-        initData: initData({ height, width }),
+        initData,
         initialParams,
-        updateData: updateData({ height, width }),
-        render: render({ height, width }),
+        updateData,
+        render,
         maxTime: Infinity,
       });
       model.play();
@@ -51,7 +58,7 @@ const Balls = ({ height, width }: { height: number; width: number }) => {
   return <canvas ref={canvas} height={height} width={width} />;
 };
 
-function initData(
+function initDataBuilder(
   { height, width }: { height: number; width: number },
   random: () => number = Math.random
 ) {
@@ -59,11 +66,7 @@ function initData(
     nbBalls,
     minr,
     maxr,
-  }: {
-    nbBalls: number;
-    minr: number;
-    maxr: number;
-  }) => {
+  }: Record<string, number>) => {
     const data = new Array(nbBalls).fill(0).map((ball) => {
       const angle = random() * 2 * Math.PI;
       const hue = random() * 360;
@@ -83,7 +86,7 @@ function initData(
   };
 }
 
-function render({ height, width }: { height: number; width: number }) {
+function renderBuilder({ height, width }: { height: number; width: number }) {
   return ({
     ctx,
     circle,
@@ -108,7 +111,7 @@ function render({ height, width }: { height: number; width: number }) {
   };
 }
 
-function updateData({ height, width }: { height: number; width: number }) {
+function updateDataBuilder({ height, width }: { height: number; width: number }) {
   return ({ data }: { data: Ball[] }) => {
     const updatedData = data.map((ball) => {
       ball.x = ball.x + ball.vx;

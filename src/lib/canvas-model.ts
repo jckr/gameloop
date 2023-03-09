@@ -1,14 +1,20 @@
-import { defaultProps, Model, ModelProps, ModelState, RenderDataArgs } from './model';
+import {
+  defaultProps,
+  Model,
+  ModelProps,
+  ModelState,
+  RenderDataArgs,
+} from './model';
 
-type RenderCanvas<T> = RenderDataArgs<T> &
-  Partial<{
-    canvas: HTMLCanvasElement;
-    ctx: CanvasRenderingContext2D;
-    roundRectangle: (args: RoundRectangle) => void;
-    circle: (args: Circle) => void;
-    height: number;
-    width: number;
-  }>;
+type RenderCanvas<T, U> = RenderDataArgs<T, U> & {
+  data: T;
+  canvas: HTMLCanvasElement;
+  ctx: CanvasRenderingContext2D;
+  height: number;
+  width: number;
+  roundRectangle: (args: RoundRectangle) => void;
+  circle: (args: Circle) => void;
+};
 
 type RoundRectangle = {
   x: number;
@@ -33,8 +39,7 @@ type CanvasProps<T, U> = Partial<{
   ctx?: CanvasRenderingContext2D;
   height?: number;
   width?: number;
-  render: (args: any) => void;
-  // render?: (args: RenderCanvas<T>) => void;
+  render: (args: RenderCanvas<T, U>) => void;
 }>;
 
 export const roundRectangleWithCtx = (
@@ -73,7 +78,7 @@ export const circleWithCtx = (args: Circle, ctx: CanvasRenderingContext2D) => {
   ctx.closePath();
 };
 
-export class CanvasModel<T = any, U = any> extends Model<T, U> {
+export class CanvasModel<T = any, U = any, V = any> extends Model<T, U, V> {
   private ctx: CanvasRenderingContext2D;
   private canvas: HTMLCanvasElement;
   private height: number;
@@ -81,9 +86,9 @@ export class CanvasModel<T = any, U = any> extends Model<T, U> {
 
   circle: (args: Circle) => void;
   roundRectangle: (args: RoundRectangle) => void;
-  renderWithCanvas: (args: RenderCanvas<T>) => void;
+  renderWithCanvas: (args: RenderCanvas<T, U>) => void;
 
-  constructor(allProps: CanvasProps<T, U> & Partial<ModelProps<T, U>>) {
+  constructor(allProps: CanvasProps<T, U> & Partial<ModelProps<T, U, V>>) {
     const { canvas, ctx, height, width, render, ...props } = allProps;
     super(props);
     if (ctx) {
@@ -114,7 +119,7 @@ export class CanvasModel<T = any, U = any> extends Model<T, U> {
     if (render) {
       this.renderWithCanvas = render;
     } else {
-      this.renderWithCanvas = (args: RenderCanvas<T>) => {};
+      this.renderWithCanvas = (args: RenderCanvas<T, U>) => {};
     }
   }
   render() {
